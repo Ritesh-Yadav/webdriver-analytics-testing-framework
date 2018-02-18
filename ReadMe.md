@@ -10,13 +10,18 @@
 
 ### Running Tests
 
+_**Note:** If you run test from commandline it will automatically download drivers for you in __projectDir__/webdriver folder._
+
 #### Firefox:
-```./gradlew -Denv=SIT firefoxTest```
+
+- Commandline ```./gradlew -Denv=SIT firefoxTest```
+- If you want to run test from an IDE, you have to set environment variable manually ```-Denv=PROD -Dwebdriver.gecko.driver=./webdriver/PATH/TO/geckodriver -Dbrowser=firefox```
 
 #### Chrome:
-```./gradlew -Denv=SIT chromeTest```
+- ```./gradlew -Denv=SIT chromeTest```
+- If you want to run test from an IDE, you have to set environment variable manually ```-Denv=PROD -Dwebdriver.chrome.driver=./webdriver/PATH/TO/chromedriver -Dbrowser=chrome```
 
-**Different Environment:** INT, SIT, PROD
+**Different Environment:** SIT, STAGING, PROD
 
 ### Reports
 
