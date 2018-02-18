@@ -1,0 +1,17 @@
+[
+  {
+    "id": "Raymond",
+    "title" : "Mr",
+    "firstName": "Raymond",
+    "lastName": "Smith",
+    "dobDay": "01",
+    "dobMonth": "11",
+    "dobYear": "1945",
+    "homePhone": "01510987654",
+    "mobilePhone": "07567655309",
+    "email": "@fakemail.com",
+    "password": "Password1",
+    "houseNumber": "3",
+    "postcode": "M1 4BT"
+  }
+]

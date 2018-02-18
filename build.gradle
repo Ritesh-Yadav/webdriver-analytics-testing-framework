@@ -1,0 +1,92 @@
+ext{
+    drivers = ['firefox', 'chrome', 'phantomJs']
+}
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath "org.junit.platform:junit-platform-gradle-plugin:${junitPlatformVersion}"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.junit.platform.gradle.plugin'
+apply from: 'gradle/downloadDrivers.gradle'
+
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: seleniumVersion
+
+    testCompile group: 'io.netty', name: 'netty-all', version: nettyAllVersion
+    testCompile group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: nettyTCNativeVersion
+
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: hamcrestVersion
+
+    testCompile group: 'net.lightbody.bmp', name: 'browsermob-core', version: browserMobVersion
+
+    testCompile group: 'ru.yandex.qatools.ashot', name: 'ashot', version: '1.5.4'
+
+    testCompile group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+    testCompile group: 'com.aventstack', name: 'extentreports', version: extentReportVersion
+
+    testCompile group: 'org.slf4j', name: 'slf4j-log4j12', version: slfLog4JVersion
+
+    testCompile group: 'de.sstoehr', name: 'har-reader', version: harReaderVersion
+
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+    testRuntime group: 'org.junit.platform', name: 'junit-platform-launcher', version: junitPlatformVersion
+    testCompile group: 'org.junit.platform', name: 'junit-platform-console-standalone', version: junitPlatformVersion
+
+}
+
+
+sourceSets {
+    test {
+        resources {
+            srcDirs = ['src/resources']
+        }
+    }
+}
+
+drivers.each { driver ->
+    task "${driver}Test"(type: JavaExec) {
+
+        systemProperty "env", System.getProperty("env")
+
+        classpath = project.sourceSets.test.runtimeClasspath
+        main 'org.junit.platform.console.ConsoleLauncher'
+        args '--scan-class-path'
+        args "--reports-dir=${buildDir}/junit-results"
+    }
+}
+
+firefoxTest {
+    dependsOn unzipGeckoDriver
+    systemProperty "webdriver.gecko.driver", unzipGeckoDriver.driverPath
+    systemProperty "browser", "firefox"
+}
+
+chromeTest {
+    dependsOn unzipChromeDriver
+    systemProperty "webdriver.chrome.driver", unzipChromeDriver.driverPath
+    systemProperty "browser", "chrome"
+}
+
+phantomJsTest {
+    dependsOn unzipPhantomJs
+    systemProperty "phantomjs.binary.path", unzipPhantomJs.driverPath
+    systemProperty "browser", "phantomjs"
+}

@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+out
+.gradle
+build
+webdriver
+*.png

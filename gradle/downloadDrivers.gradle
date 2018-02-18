@@ -1,0 +1,123 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.apache.commons.io.FileUtils
+
+
+buildscript {
+	repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+	}
+	dependencies {
+		classpath "commons-io:commons-io:2.5"
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M6'
+	}
+}
+
+task downloadGeckoDriver {
+	def driverOsFilename
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		driverOsFilename = "geckodriver-v${geckoDriverVersion}-win64.zip"
+	} else if (Os.isFamily(Os.FAMILY_MAC)) {
+		driverOsFilename = "geckodriver-v${geckoDriverVersion}-macos.tar.gz"
+	} else if (Os.isFamily(Os.FAMILY_UNIX)) {
+		driverOsFilename = "geckodriver-v${geckoDriverVersion}-linux64.tar.gz"
+	}
+	def outputFile = file("$projectDir/webdriver/${driverOsFilename}")
+	inputs.property("geckodriver", geckoDriverVersion)
+	outputs.file(outputFile)
+
+	doLast {
+		FileUtils.copyURLToFile(new URL("https://github.com/mozilla/geckodriver/releases/download/v${geckoDriverVersion}/${driverOsFilename}"), outputFile)
+	}
+}
+
+task unzipGeckoDriver(type: Copy) {
+	def outputDir = file("$projectDir/webdriver/geckodriver$geckoDriverVersion")
+    def geckodriverFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "geckodriver.exe" : "geckodriver"
+    def geckodriverFile = new File(outputDir, geckodriverFilename)
+
+    unzipGeckoDriver.ext.driverPath = geckodriverFile.absolutePath
+
+    if (!geckodriverFile.exists()) {
+        dependsOn downloadGeckoDriver
+
+		def archive = downloadGeckoDriver.outputs.files.singleFile
+		from(Os.isFamily(Os.FAMILY_WINDOWS) ? zipTree(archive) : tarTree(archive))
+        into(outputDir)
+    }
+}
+
+task downloadChromeDriver {
+    def driverOsFilenamePart
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        driverOsFilenamePart = "win32"
+    } else if (Os.isFamily(Os.FAMILY_MAC)) {
+        driverOsFilenamePart = "mac64"
+    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+        driverOsFilenamePart = Os.isArch("amd64") ? "linux64" : "linux32"
+    }
+
+	def outputFile = file("$projectDir/webdriver/chromedriver.${chromeDriverVersion}-${driverOsFilenamePart}.zip")
+	inputs.property("chromeDriverVersion", chromeDriverVersion)
+	outputs.file(outputFile)
+
+	doLast {
+		FileUtils.copyURLToFile(new URL("https://chromedriver.storage.googleapis.com/${chromeDriverVersion}/chromedriver_${driverOsFilenamePart}.zip"), outputFile)
+	}
+}
+
+task unzipChromeDriver(type: Copy) {
+	def outputDir = file("$projectDir/webdriver/chromedriver$chromeDriverVersion")
+    def chromedriverFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "chromedriver.exe" : "chromedriver"
+    def chromedriverFile = new File(outputDir, chromedriverFilename)
+
+    unzipChromeDriver.ext.driverPath = chromedriverFile.absolutePath
+
+    if (!chromedriverFile.exists()) {
+        dependsOn downloadChromeDriver
+
+        from(zipTree(downloadChromeDriver.outputs.files.singleFile))
+        into(outputDir)
+    }
+}
+
+task downloadPhantomJs {
+	def osFilenamePart
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		osFilenamePart = "windows.zip"
+	} else if (Os.isFamily(Os.FAMILY_MAC)) {
+		osFilenamePart = "macosx.zip"
+	} else if (Os.isFamily(Os.FAMILY_UNIX)) {
+		osFilenamePart = Os.isArch("amd64") ? "linux-x86_64.tar.bz2" : "linux-i686.tar.bz2"
+	}
+
+	def filename = "phantomjs-$phantomJsVersion-$osFilenamePart"
+	def outputFile = file("$projectDir/webdriver/$filename")
+	inputs.property("phantomJsVersion", phantomJsVersion)
+	outputs.file(outputFile)
+
+	doLast {
+		FileUtils.copyURLToFile(new URL("https://bitbucket.org/ariya/phantomjs/downloads/$filename"), outputFile)
+	}
+}
+
+task unzipPhantomJs(type: Copy) {
+	def outputDir = file("$projectDir/webdriver/phantomjs$phantomJsVersion")
+    def phantomJsFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "bin/phantomjs.exe" : "bin/phantomjs"
+    def phantomJsFile = new File(outputDir, phantomJsFilename)
+
+    unzipPhantomJs.ext.driverPath = phantomJsFile.absolutePath
+
+    if (!phantomJsFile.exists()) {
+        dependsOn downloadPhantomJs
+
+        def archive = downloadPhantomJs.outputs.files.singleFile
+
+        from(Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_WINDOWS) ? zipTree(archive) : tarTree(archive))
+        into(outputDir)
+        eachFile { FileCopyDetails fcp ->
+            fcp.relativePath = new RelativePath(!fcp.directory, *fcp.relativePath.segments[1..-1])
+        }
+    }
+}
